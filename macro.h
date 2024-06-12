@@ -15,9 +15,9 @@ typedef struct {
     char name[80];
     char code[1000];
 } Macro;
-int removeMacro();
+void removeMacro();
 char* findMacroCode(Macro database[], char name[]);
-void addMacro(Macro database[], char name[], char code[]);
+void addMacro(Macro database[], char name[], const char code[]);
 void initializeDatabase(Macro database[]);
 
 
