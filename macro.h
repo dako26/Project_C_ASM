@@ -9,16 +9,30 @@
 
 #define START_MACRO "macr"
 #define END_MACRO "endmacr"
-#define MAX_MACRO 100
+#define INITIAL_SIZE  101
 
-typedef struct {
+typedef struct Macro {
     char name[80];
     char code[1000];
+    struct Macro *next;
 } Macro;
-void removeMacro();
-char* findMacroCode(Macro database[], char name[]);
-void addMacro(Macro database[], char name[], const char code[]);
-void initializeDatabase(Macro database[]);
+
+typedef struct {
+    int size;
+    int count;
+    Macro **table;
+} MacroTable;
+
+
+
+unsigned int hashFunction(const char *str, int size);
+MacroTable* createTable(int size);
+void freeTable(MacroTable *table);
+void resizeTable(MacroTable *table);
+void addMacro(MacroTable *table, char name[], const char code[]);
+char *findMacroCode(MacroTable *table, char name[]);
+void removeMacro(char *fileName);
+
 
 
 #endif // MACRO_H
