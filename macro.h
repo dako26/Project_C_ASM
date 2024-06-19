@@ -31,7 +31,8 @@ void freeTable(MacroTable *table);
 void resizeTable(MacroTable *table);
 void addMacro(MacroTable *table, char name[], const char code[]);
 char *findMacroCode(MacroTable *table, char name[]);
-void removeMacro(char *fileName);
+int checkValidMacroName(char *name);
+char *removeMacro(char *fileName);
 
 
 

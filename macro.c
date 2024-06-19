@@ -79,7 +79,7 @@ void addMacro(MacroTable *table, char name[], const char code[]) {
     while (current != NULL){
         if (strcmp(current->name, name)== 0){
             fprintf(stderr,"Macro %s already exists\n", name);
-            return;
+            return ;
         }
         current = current->next;
     }
@@ -108,8 +108,18 @@ char *findMacroCode(MacroTable *table, char name[]) {
     }
     return NULL;
 }
-// TODO add macro name checker
-void removeMacro(char *fileName) {
+int checkValidMacroName(char *name) {
+    if (strlen(name) > 31) {
+        fprintf(stderr,"The macro name is more than 31 characters\n");
+        return FALSE;
+    }
+    if ((name[0] < 'A' || name[0] > 'Z') && (name[0] < 'a' || name[0] > 'z')) {
+        fprintf(stderr,"The macro name must start with a latin letter\n");
+        return FALSE;
+    }
+    return TRUE;
+}
+char *removeMacro(char *fileName) {
     MacroTable *table;
     FILE *writeFile, *readFile;
     int flag;
@@ -118,14 +128,20 @@ void removeMacro(char *fileName) {
     char macroName[80];
     char *existing_code;
     char buffer[100];
-    char newFileName[100];
+    char *newFileName;
     char *dot_position;
     char temp[100];
     temp[0] = '\0';
+    newFileName = (char *) malloc(100*sizeof(char));
+    if (newFileName == NULL) {
+        fprintf(stderr,"Error allocating memory\n");
+        return NULL;
+    }
     dot_position = strrchr(fileName, '.');
     if (dot_position == NULL) {
         fprintf(stderr,"Error finding file extension\n");
-        return;
+        free(newFileName);
+        return NULL;
     }
     strncpy(newFileName, fileName, dot_position - fileName);
     strcpy(newFileName + (dot_position - fileName), ".ps");
@@ -133,19 +149,24 @@ void removeMacro(char *fileName) {
     table = createTable(INITIAL_SIZE);
     if (table == NULL) {
         fprintf(stderr,"Error creating table\n");
-        return;
+        free(newFileName);
+        return NULL;
     }
     flag = FALSE;
     readFile = fopen(fileName, "r");
     if (readFile == NULL) {
         fprintf(stderr,"Error opening readFile\n");
-        return;
+        free(newFileName);
+        freeTable(table);
+        return NULL;
     }
     writeFile = fopen(newFileName, "w+");
     if (writeFile == NULL) {
         fprintf(stderr,"Error opening writeFile\n");
+        freeTable(newFileName);
+        freeTable(table);
         fclose(readFile);
-        return;
+        return NULL;
     }
 
     while (fgets(buffer, sizeof(buffer), readFile) != NULL) {
@@ -153,22 +174,41 @@ void removeMacro(char *fileName) {
             flag = TRUE;
             if (sscanf(buffer + strlen(START_MACRO), "%s", name)!= 1) {
                 fprintf(stderr,"Error in macro name\n");
-                return;
+                free(newFileName);
+                fclose(readFile);
+                fclose(writeFile);
+                freeTable(table);
+                return NULL;
+            }
+            if (!checkValidMacroName(name)) {
+                free(newFileName);
+                fclose(readFile);
+                fclose(writeFile);
+                freeTable(table);
+                return NULL;
             }
             removeSpaces(buffer);
             sscanf(buffer + strlen(START_MACRO) + strlen(name), "%s", temp);
             if (temp[0] != '\0')
             {
                 fprintf(stderr,"Error in macro name\n");
-                return;
+                free(newFileName);
+                fclose(readFile);
+                fclose(writeFile);
+                freeTable(table);
+                return NULL;
             }
             fgets(buffer, sizeof(buffer), readFile);
-        } while (flag == TRUE) {
+        } while (flag) {
             if (strncmp(buffer, END_MACRO, strlen(END_MACRO)) == 0) {
                 if(sscanf(buffer + strlen(END_MACRO), "%s", temp)==1)
                 {
                     fprintf(stderr,"Error in macro name\n");
-                    return;
+                    free(newFileName);
+                    fclose(readFile);
+                    fclose(writeFile);
+                    freeTable(table);
+                    return NULL;
                 }
                 addMacro(table, name, code);
                 flag = FALSE;
@@ -188,8 +228,10 @@ void removeMacro(char *fileName) {
 
         }
     }
+    fclose(readFile);
     fclose(writeFile);
     freeTable(table);
+    return newFileName;
 }
 
 
