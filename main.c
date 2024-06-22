@@ -15,6 +15,7 @@ int main(int argc, char *argv[]) {
              continue;
          }
          printf("%s",fileName);
+        freeMacroNameNode(macroNames);
          free(fileName);
     }
     return 0;

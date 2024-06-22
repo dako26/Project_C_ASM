@@ -9,5 +9,4 @@
 
 
 int firstPass(char *fileName);
-int checkLabel(char *line);
 #endif //PROJECT_C_ASM_FIRSTPASS_H

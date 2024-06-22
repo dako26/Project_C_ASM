@@ -14,4 +14,10 @@ add_executable(Project_C_ASM
         util.h
         firstPass.c
         firstPass.h
+        inputValidation.c
+        inputValidation.h
+        table.c
+        table.h
+        assembly.c
+        assembly.h
 )

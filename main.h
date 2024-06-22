@@ -12,6 +12,8 @@
 #include "macro.h"
 #include "util.h"
 #include "firstPass.h"
+#include "inputValidation.h"
+#include "table.h"
 
 typedef enum { FALSE, TRUE } boolean;
 
