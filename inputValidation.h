@@ -16,9 +16,17 @@ typedef enum {LabelLine,
               EmptyLine,
               ErrorLine
 }lineType;
+
 int checkLabel(char *line);
 int checkData(char *line);
 int checkString(char *line);
 int checkInstruction(char *line);
 int checkEntryAndExtern(char *line);
+int checkComment(char *line);
+int checkEmpty(char *line);
+int checkCommandIfTwoOperands(char *line);
+int checkCommandIfOneOperand(char *line);
+int checkCommandIfZeroOperand(char *line);
+int checkCommand(char *line);
+
 #endif //PROJECT_C_ASM_INPUTVALIDATION_H

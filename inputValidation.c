@@ -11,7 +11,7 @@ int validateLine(char *line) {
     while (isspace(temp[0]))
         temp++;
     if (temp[0] == ';') {
-        return EmptyLine;
+        return CommentLine;
     }
     if (temp[0] == '\n') {
         return EmptyLine;
@@ -42,67 +42,331 @@ int validateLine(char *line) {
             return ExternLine;
         }
     }
+    if (checkCommand(temp) == TRUE) {
+        return InstructionLine;
+    }
     sscanf(temp, "%s", temp);
     size = strlen(temp);
     if (temp[size - 1] == ':') {
         if (checkLabel(temp) == FALSE) {
             return ErrorLine;
         }
-        temp =line + size;
-        if(validateLine(temp)==ErrorLine)
-            return ErrorLine;
-        return LabelLine;
+        temp = line;
+        while(isspace(temp[0]))
+            temp++;
+        temp += size;
+        if (temp[0] == '\0') {
+            return LabelLine;
+        }
+        return (validateLine(temp) == ErrorLine) ? ErrorLine : LabelLine;
     }
-
+    fprintf(stderr, "Error: invalid line %s\n" , line);
+    return ErrorLine;
 }
 
 int checkCommand(char *line) {
     char *temp;
     temp = line;
+
     while (isspace(temp[0]))
         temp++;
-    if (strncmp(temp, "mov", strlen("mov")) == 0||strncmp(temp,"add",strlen("add"))==0||strncmp(temp,"sub",strlen("sub"))==0||strncmp(temp,"cmp",strlen("cmp"))==0) {
-        
+    if (strncmp(temp, "mov", strlen("mov")) == 0 || strncmp(temp, "cmp", strlen("cmp")) == 0 ||
+        strncmp(temp, "add", strlen("add")) == 0 || strncmp(temp, "sub", strlen("sub")) == 0) {
+        if (checkCommandIfTwoOperands(line) == FALSE) {
+            return FALSE;
+        }
         return TRUE;
     }
-    
+    if (strncmp(temp, "clr", strlen("clr")) == 0 || strncmp(temp, "not", strlen("not")) == 0 ||
+        strncmp(temp, "inc", strlen("inc")) == 0 || strncmp(temp, "dec", strlen("dec")) == 0 ||
+        strncmp(temp, "jmp", strlen("jmp")) == 0 ||
+        strncmp(temp, "bne", strlen("bne")) == 0 || strncmp(temp, "red", strlen("red")) == 0 ||
+        strncmp(temp, "prn", strlen("prn")) == 0 || strncmp(temp, "jsr", strlen("jsr")) == 0) {
+        if (checkCommandIfOneOperand(line) == FALSE) {
+            return FALSE;
+        }
+        return TRUE;
+    }
+    if (strncmp(temp, "rts", strlen("rts")) == 0 || strncmp(temp, "stop", strlen("stop")) == 0) {
+        if (checkCommandIfZeroOperand(line) == FALSE) {
+            return FALSE;
+        }
+        return TRUE;
+    }
+    return FALSE;
 }
-int checkCommandIfTwoOperands(char *line){
+
+int checkCommandIfTwoOperands(char *line) {
     char *temp;
     int flagSecondOperand, i;
-    flagSecondOperand = FALSE ;
+    flagSecondOperand = FALSE;
+    temp = line;
+    while (isspace(line[0]))
+        line++;
+    while (isspace(temp[0]))
+        temp++;
+    temp += 3;
+    if (temp[0] != ' ') {
+        fprintf(stderr, "The command is missing a space in line %s\n", line);
+        return FALSE;
+    }
+    for (i = 0; i < 1; i++) {
+        while (isspace(temp[0]))
+            temp++;
+        if (!flagSecondOperand && strncmp(line, "lea", strlen("lea")) == 0) {
+            temp += 3;
+            while (isspace(temp[0]))
+                temp++;
+            if (temp[0] >= 'a' || temp[0] <= 'z' || temp[0] >= 'A' || temp[0] <= 'Z') {
+                temp++;
+                while ((temp[0] >= 'a' && temp[0] <= 'z') || (temp[0] >= 'A' && temp[0] <= 'Z') ||
+                       (temp[0] >= '0' && temp[0] <= '9'))
+                    temp++;
+                while (isspace(temp[0]))
+                    temp++;
+                if (temp[0] != ',') {
+                    fprintf(stderr, "The command is missing a comma in line %s\n", line);
+                    return FALSE;
+                }
+                temp = strtok(NULL, ",");
+                if (temp == NULL) {
+                    fprintf(stderr, "The command is missing a second operand in line %s\n", line);
+                    return FALSE;
+                }
+                flagSecondOperand = TRUE;
+                continue;
+            } else {
+                fprintf(stderr, "Wrong operand in line %s \n", line);
+                return FALSE;
+            }
+        }
+        if ((flagSecondOperand && strncmp(line, "cmp", strlen("cmp")) == 0) || !flagSecondOperand) {
+            if (temp[0] == '#') {
+                temp++;
+                if (temp[0] == '-' || temp[0] == '+' || isdigit(temp[0]) == 0) {
+                    temp++;
+                    while (isdigit(temp[0]) == 0)
+                        temp++;
+                    while (isspace(temp[0]))
+                        temp++;
+                    if (temp[0] != ',' && flagSecondOperand == FALSE) {
+                        fprintf(stderr, "The command is missing a comma in line %s\n", line);
+                        return FALSE;
+                    }
+                    if (flagSecondOperand == FALSE) {
+                        temp = strtok(NULL, ",");
+                        if (temp == NULL) {
+                            fprintf(stderr, "The command is missing a second operand in line %s\n", line);
+                            return FALSE;
+                        }
+                    }
+                    flagSecondOperand = TRUE;
+                    continue;
+                } else {
+                    fprintf(stderr, "Wrong operand in line %s \n", line);
+                    return FALSE;
+                }
+            }
+        }
+        if ((temp[0] >= 'a') && (temp[0] <= 'z') || (temp[0] >= 'A') && (temp[0] <= 'Z')) {
+            temp++;
+            while ((temp[0] >= 'a') && (temp[0] <= 'z') || (temp[0] >= 'A') && (temp[0] <= 'Z') ||
+                   (temp[0] >= '0' && temp[0] <= '9'))
+                temp++;
+            while (isspace(temp[0]))
+                temp++;
+            if (temp[0] != ',' && flagSecondOperand == FALSE) {
+                fprintf(stderr, "The command is missing a comma in line %s\n", line);
+                return FALSE;
+            }
+            if (flagSecondOperand == FALSE) {
+                temp = strtok(NULL, ",");
+                if (temp == NULL) {
+                    fprintf(stderr, "The command is missing a second operand in line %s\n", line);
+                    return FALSE;
+                }
+            }
+            flagSecondOperand = TRUE;
+            continue;
+        }
+
+        if (temp[0] == '*')
+            temp++;
+        if (temp[0] == 'r' && (temp[1] >= '0' && temp[1] <= '7')) {
+            temp += 2;
+            while (isspace(temp[0]))
+                temp++;
+            if (temp[0] != ',' && flagSecondOperand == FALSE) {
+                fprintf(stderr, "The command is missing a comma in line %s\n", line);
+                return FALSE;
+            }
+            if (flagSecondOperand == FALSE) {
+                temp = (strtok(NULL, ","));
+                if (temp == NULL) {
+                    fprintf(stderr, "The command is missing a second operand in line %s\n", line);
+                    return FALSE;
+                }
+            }
+            flagSecondOperand = TRUE;
+            continue;
+        }
+        fprintf(stderr, "Wrong operand in line %s \n", line);
+        return FALSE;
+    }
+    if (temp[0] != '\0') {
+        fprintf(stderr, "The command has extra characters in line %s\n", line);
+        return FALSE;
+    }
+    return TRUE;
+}
+
+int checkCommandIfOneOperand(char *line) {
+    char *temp;
+    int count;
+    temp = line;
+    while (isspace(line[0]))
+        line++;
+    while (isspace(temp[0]))
+        temp++;
+    temp += 3;
+    if (temp[0] != ' ') {
+        fprintf(stderr, "The command is missing a space in line %s\n", line);
+        return FALSE;
+    }
+    while (isspace(temp[0]))
+        temp++;
+    if (strncmp(line, "prn", strlen("prn")) == 0 && temp[0] == '#') {
+        if (temp[0] == '#') {
+            temp++;
+            if (temp[0] == '-' || temp[0] == '+' || isdigit(temp[0]) == 0) {
+                temp++;
+                while (isdigit(temp[0]) == 0) {
+                    temp++;
+                }
+                if (temp[0] != '\0') {
+                    fprintf(stderr, "The command has extra characters in line %s\n", line);
+                    return FALSE;
+                }
+            } else {
+                fprintf(stderr, "Wrong operand in line %s \n", line);
+                return FALSE;
+            }
+            return TRUE;
+
+        }
+    }
+    if ((strncmp(line, "prn", strlen("prn")) == 0 || strncmp(line, "clr", strlen("clr")) == 0 ||
+         strncmp(line, "not", strlen("not")) == 0 || strncmp(line, "inc", strlen("inc")) == 0 ||
+         strncmp(line, "dec", strlen("dec")) == 0) && (temp[0] == 'r' && (temp[1] >= '0' && temp[1] <= '7'))) {
+        temp + 2;
+        while (isspace(temp[0]))
+            temp++;
+        if (temp[0] != '\0') {
+            fprintf(stderr, "The command has extra characters in line %s\n", line);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    if (temp[0] == '#') {
+        temp++;
+        if (temp[0] == '-' || temp[0] == '+' || isdigit(temp[0]) == 0) {
+            temp++;
+            while (isdigit(temp[0]) == 0)
+                temp++;
+            while (isspace(temp[0]))
+                temp++;
+            if (temp[0] != '\0') {
+                fprintf(stderr, "The command has extra characters in line %s\n", line);
+                return FALSE;
+            }
+            return TRUE;
+        } else {
+            fprintf(stderr, "Wrong operand in line %s \n", line);
+            return FALSE;
+        }
+    }
+    if (temp[0] == '*') {
+        temp++;
+        if (temp[0] == 'r' && (temp[1] >= '0' && temp[1] <= '7')) {
+            temp += 2;
+            while (isspace(temp[0]))
+                temp++;
+            if (temp[0] != '\0') {
+                fprintf(stderr, "The command has extra characters in line %s\n", line);
+                return FALSE;
+            }
+            return TRUE;
+
+        }
+    }
+    if ((temp[0] >= 'a' && temp[0] <= 'z') || (temp[0] >= 'A' && temp[0] <= 'Z')) {
+        if (strlen(temp) > 31) {
+            fprintf(stderr, "The label is too long\n");
+            return FALSE;
+        }
+        temp++;
+        while ((temp[0] >= 'a' && temp[0] <= 'z') || (temp[0] >= 'A' && temp[0] <= 'Z') ||
+               (temp[0] >= '0' && temp[0] <= '9'))
+            temp++;
+        while (isspace(temp[0]))
+            temp++;
+        if (temp[0] != '\0') {
+            fprintf(stderr, "The command has extra characters in line %s\n", line);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    fprintf(stderr, "Wrong operand in line %s \n", line);
+    return FALSE;
+}
+
+int checkCommandIfZeroOperand(char *line) {
+    char *temp;
     temp = line;
     while (isspace(temp[0]))
         temp++;
-    temp+=3;
-    if (temp[0] != ' ') {
-        fprintf(stderr, "The command is missing a space in line %s\n",line);
-        return FALSE;
-    }
-    removeSpaces(temp);
-    for ( i = 0; i <1 ; i++) {
-        if ((flagSecondOperand && strncmp(line, "cmp", strlen("cmp")) == 0)||!flagSecondOperand) {
-            if (temp[0]=='#'){
-                temp++;
-                if (checkNumber(temp) == 1) {
-                    temp = strtok(NULL, ",");
-                    continue;
-                }else{
-                    fprintf(stderr, "Wrong first operand in line %s \n",line);
-                    return FALSE;
-                }
-
-            }
+    while (isspace(line[0]))
+        line++;
+    if (strncmp(temp, "rts", strlen("rts")) == 0) {
+        temp += 3;
+        while (isspace(temp[0]))
+            temp++;
+        if (temp[0] != '\0') {
+            fprintf(stderr, "The command has extra characters in line %s\n", line);
+            return FALSE;
         }
-
+        return TRUE;
     }
-};
+    if (strncmp(temp, "stop", strlen("stop")) == 0) {
+        temp += 4;
+        while (isspace(temp[0]))
+            temp++;
+        if (temp[0] != '\0') {
+            fprintf(stderr, "The command has extra characters in line %s\n", line);
+            return FALSE;
+        }
+        return TRUE;
+    }
+    fprintf(stderr, "Wrong operand in line %s \n", line);
+    return FALSE;
+}
+
 int checkLabel(char *line) {
     char *instruction;
     instruction = line;
+    if (strlen(instruction) > 31) {
+        fprintf(stderr, "The label is too long\n");
+        return FALSE;
+    }
+    if ((instruction[0] >= 'a' && instruction[0] <= 'z') || (instruction[0] >= 'A' && instruction[0] <= 'Z')) {
+        fprintf(stderr, "The label must start with a letter\n");
+        return FALSE;
+    }
     while (isspace(instruction[0]))
         instruction++;
-    while ((instruction[0] >= 'a' && instruction[0] <= 'z') || (instruction[0] >= 'A' && instruction[0] <= 'Z')||(instruction[0]>='0' && instruction[0] <= '9'))
+    while ((instruction[0] >= 'a' && instruction[0] <= 'z') ||
+           (instruction[0] >= 'A' && instruction[0] <= 'Z') ||
+           (instruction[0] >= '0' && instruction[0] <= '9'))
         instruction++;
     if (instruction[0] != ':') {
         fprintf(stderr, "The label is missing a colon\n");
@@ -131,7 +395,8 @@ int checkEntryAndExtern(char *line) {
         fprintf(stderr, "The entry/extern instruction is missing a label\n");
         return FALSE;
     }
-    while ((instruction[0] >= 'a' && instruction[0] <= 'z') || (instruction[0] >= 'A' && instruction[0] <= 'Z') ||
+    while ((instruction[0] >= 'a' && instruction[0] <= 'z') ||
+           (instruction[0] >= 'A' && instruction[0] <= 'Z') ||
            (instruction[0] >= '0' && instruction[0] <= '9'))
         instruction++;
     if (instruction[0] != '\0') {
