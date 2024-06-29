@@ -28,5 +28,6 @@ int checkCommandIfTwoOperands(char *line);
 int checkCommandIfOneOperand(char *line);
 int checkCommandIfZeroOperand(char *line);
 int checkCommand(char *line);
+int validateLine(char *line);
 
 #endif //PROJECT_C_ASM_INPUTVALIDATION_H

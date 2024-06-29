@@ -16,7 +16,11 @@ int main(int argc, char *argv[]) {
          }
          printf("%s",fileName);
         freeMacroNameNode(macroNames);
-         free(fileName);
+        free(fileName);
+        freeLabelNode(labelHead);
+        freeEntryLabelNode(entryHead);
+        freeExternLabelNode(externHead);
+        freeMemory(memoryHead);
     }
     return 0;
 }

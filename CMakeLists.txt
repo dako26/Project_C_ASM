@@ -20,4 +20,6 @@ add_executable(Project_C_ASM
         table.h
         assembly.c
         assembly.h
+        memory.c
+        memory.h
 )

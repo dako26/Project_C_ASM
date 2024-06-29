@@ -5,60 +5,135 @@
 #include "firstPass.h"
 
 int firstPass(char *fileName) {
-    int ic, dc, labelFlag,errorFlag;
+    entryLabel *entryHead = NULL;
+    externLabel *externHead = NULL;
+    Memory *memoryHead = NULL;
+    Label *labelHead = NULL;
+    int labelFlag, lineFlag, errorFlag, tempDc, i;
+    int num;
     size_t labelSize;
-    errorFlag = FALSE;
     char *temp;
+    char *endptr;
+
+    errorFlag = FALSE;
     FILE *file;
     labelFlag = FALSE;
     ic = 0;
     dc = 0;
-    char line[80];
+    char line[90];
     file = fopen(fileName, "r");
     if (file == NULL) {
-        fprintf(stderr, "Error: file not found\n");
-        errorFlag = TRUE;
+        fprintf(stderr, "Error: file not found %s\n", fileName);
+        return FALSE;
     }
-    while (fgets(line, sizeof(line), file) != NULL) {
-        if (line[0] == ';') {
-            continue;
-        }
-        if (line[0] == '\n') {
-            continue;
-        }
-        temp = strtok(line, ":");
-        if (temp != NULL) {
-            labelFlag = TRUE;
-            if (checkLabel(line) == FALSE) {
-                errorFlag = TRUE;
-            }
-            labelSize = strlen(temp);
-            temp = line + labelSize + 1;
-            removeSpaces(temp);
-            if (temp[0] == '.') {
-                if (checkInstruction(temp) == FALSE) {
-                    errorFlag = TRUE;
-                }
-                if (temp[1] == 'd'||temp[1]=='s') {
-
-                    if (temp[1] == 'd') {
-                        dc += checkNumber(temp);
-                    }
-                    if (temp[1] == 's') {
-                        dc += numberOfWords(temp);
-                    }
-
-                }
-            }
-
-        }
-    if (line[0] == '.') {
-        if (checkInstruction(line) == FALSE) {
+    while (fgets(line, 90, file) != NULL) {
+        labelFlag = FALSE;
+        if (strlen(line) > 80) {
+            fprintf(stderr, "Error: line exceeds 80 characters: %s\n", line);
             errorFlag = TRUE;
+            continue;
         }
-    }
-}
+        temp = strdup(line); // Make a copy of the line for processing
+        if (temp == NULL) {
+            fprintf(stderr, "Error: memory allocation failed\n");
+            errorFlag = TRUE;
+            continue;
+        }
+        lineFlag = validateLine(temp);
+        if (lineFlag == ErrorLine) {
+            errorFlag = TRUE;
+            continue;
+        } else if (lineFlag == EmptyLine) {
+            continue;
+        } else if (lineFlag == CommentLine) {
+            continue;
+        } else if (lineFlag == LabelLine) {
+            labelSize = strcspn(temp, ":");
+            if (labelSize == strlen(temp) - 1) {
+                fprintf(stderr, "Error: invalid label %s\n", temp);
+                errorFlag = TRUE;
+                continue;
+            }
+            labelFlag = TRUE;
+            tempDc = 0;
+            if (validateLine(temp + labelSize + 1) == DataLine)
+                tempDc = checkData(temp + labelSize + 1);
+            else if (validateLine(temp + labelSize + 1) == StringLine)
+                tempDc = checkString(temp + labelSize + 1);
+            if (tempDc == 0) {
+                addLabel(&labelHead, temp, ic + 100, tempDc, FALSE);
+            } else {
+                addLabel(&labelHead, temp, ic + 100, tempDc, TRUE);
+            }
+            temp = labelSize + 1 + temp;
+        }
+        if (lineFlag == EntryLine) {
+            while (isspace(*temp)) {
+                temp++;
+            }
+            temp += strlen(".entry");
+            while (isspace(*temp)) {
+                temp++;
+            }
+            addEntryLabel(&entryHead, temp, ic + 100);
 
+        }
+        if (lineFlag == ExternLine) {
+            while (isspace(*temp)) {
+                temp++;
+            }
+            temp += strlen(".extern");
+            while (isspace(*temp)) {
+                temp++;
+            }
+            addExternLabel(&externHead, temp, ic + 100);
+        }
+        if (lineFlag == DataLine) {
+            tempDc = checkData(temp);
+            if (tempDc == 0) {
+                fprintf(stderr, "Error: invalid data line %s\n", temp);
+                errorFlag = TRUE;
+                continue;
+            }
+            for (i = 0; i < tempDc; i++) {
+                while (isspace(*temp)) {
+                    temp++;
+                }
+                temp += strlen(".data");
+                num = strtol(temp, &temp, 10);
+
+                addMemory(&memoryHead, ic + 100,"NO" ,decimalToBinary((num)));
+                ic++;
+            }
+            dc += tempDc;
+        }
+        if (lineFlag == StringLine) {
+            tempDc = checkString(temp);
+            if (tempDc == 0) {
+                fprintf(stderr, "Error: invalid string line %s\n", temp);
+                errorFlag = TRUE;
+                continue;
+            }
+            while (isspace(*temp)) {
+                temp++;
+            }
+            temp += strlen(".string");
+            for (i = 0; i < tempDc; i++) {
+                num = (int) temp[i];
+                addMemory(&memoryHead, ic + 100, "NO",decimalToBinary((num)));
+                ic++;
+            }
+            dc += tempDc;
+        }
+        if (lineFlag == InstructionLine) {
+
+        }
+
+
+        free(temp);
+    }
+    fclose(file);
+    return TRUE;
 }
 
 

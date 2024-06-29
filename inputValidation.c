@@ -4,6 +4,7 @@
 #include "inputValidation.h"
 
 int validateLine(char *line) {
+    int result;
     size_t size;
     char *temp;
     temp = line;
@@ -58,7 +59,8 @@ int validateLine(char *line) {
         if (temp[0] == '\0') {
             return LabelLine;
         }
-        return (validateLine(temp) == ErrorLine) ? ErrorLine : LabelLine;
+        result = validateLine(temp);
+        return (result == ErrorLine) ? ErrorLine : LabelLine;
     }
     fprintf(stderr, "Error: invalid line %s\n" , line);
     return ErrorLine;
