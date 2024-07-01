@@ -133,7 +133,7 @@ int isLabelExists(Label *head, const char *name) {
     return FALSE; // Label does not exist
 }
 
-externLabel *createExternLabelNode(const char *name, int address) {
+externLabel *createExternLabelNode(const char *name) {
     // Allocate memory for the externLabel structure
     externLabel *newNode = (externLabel *) malloc(sizeof(externLabel));
     if (newNode == NULL) {
@@ -152,7 +152,6 @@ externLabel *createExternLabelNode(const char *name, int address) {
     // Copy the contents of 'name' into newNode->name
     strcpy(newNode->name, name);
 
-    newNode->address = address;
     newNode->next = NULL; // Initialize next pointer to NULL
     return newNode;
 }
@@ -162,7 +161,7 @@ void freeExternLabelNode(externLabel *node) {
         free(node);
     }
 }
-void addExternLabel(externLabel **head, const char *name, int address) {
+void addExternLabel(externLabel **head, const char *name) {
     // Create a new node
     externLabel *newNode = (externLabel *) malloc(sizeof(externLabel));
     if (newNode == NULL) {
@@ -179,7 +178,6 @@ void addExternLabel(externLabel **head, const char *name, int address) {
     }
     strcpy(newNode->name, name);
 
-    newNode->address = address;
 
     // Initialize next pointer
     newNode->next = NULL;
@@ -206,7 +204,7 @@ int isExternLabelExists(externLabel *head, const char *name) {
     }
     return FALSE; // Name does not exist
 }
-entryLabel *createEntryLabelNode(const char *name, int address) {
+entryLabel *createEntryLabelNode(const char *name) {
     // Allocate memory for the entryLabel structure
     entryLabel *newNode = (entryLabel *) malloc(sizeof(entryLabel));
     if (newNode == NULL) {
@@ -225,7 +223,6 @@ entryLabel *createEntryLabelNode(const char *name, int address) {
     // Copy the contents of 'name' into newNode->name
     strcpy(newNode->name, name);
 
-    newNode->address = address;
     newNode->next = NULL; // Initialize next pointer to NULL
     return newNode;
 }
@@ -235,7 +232,7 @@ void freeEntryLabelNode(entryLabel *node) {
         free(node);
     }
 }
-void addEntryLabel(entryLabel **head, const char *name, int address) {
+void addEntryLabel(entryLabel **head, const char *name) {
     // Create a new node
     entryLabel *newNode = (entryLabel *) malloc(sizeof(entryLabel));
     if (newNode == NULL) {
@@ -252,7 +249,6 @@ void addEntryLabel(entryLabel **head, const char *name, int address) {
     }
     strcpy(newNode->name, name);
 
-    newNode->address = address;
 
     // Initialize next pointer
     newNode->next = NULL;

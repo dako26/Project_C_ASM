@@ -13,6 +13,7 @@ int firstPass(char *fileName) {
     int num;
     size_t labelSize;
     char *temp;
+    char *nameTemp;
     char *endptr;
 
     errorFlag = FALSE;
@@ -50,7 +51,7 @@ int firstPass(char *fileName) {
         } else if (lineFlag == LabelLine) {
             labelSize = strcspn(temp, ":");
             if (labelSize == strlen(temp) - 1) {
-                fprintf(stderr, "Error: invalid label %s\n", temp);
+                fprintf(stderr, "Error: invalid label %s\n", line);
                 errorFlag = TRUE;
                 continue;
             }
@@ -91,7 +92,7 @@ int firstPass(char *fileName) {
         if (lineFlag == DataLine) {
             tempDc = checkData(temp);
             if (tempDc == 0) {
-                fprintf(stderr, "Error: invalid data line %s\n", temp);
+                fprintf(stderr, "Error: invalid data line %s\n", line);
                 errorFlag = TRUE;
                 continue;
             }
@@ -102,7 +103,7 @@ int firstPass(char *fileName) {
                 temp += strlen(".data");
                 num = strtol(temp, &temp, 10);
 
-                addMemory(&memoryHead, ic + 100,"NO" ,decimalToBinary((num)));
+                addMemory(&memoryHead, ic + 100, "NO", decimalToBinary((num)));
                 ic++;
             }
             dc += tempDc;
@@ -110,7 +111,7 @@ int firstPass(char *fileName) {
         if (lineFlag == StringLine) {
             tempDc = checkString(temp);
             if (tempDc == 0) {
-                fprintf(stderr, "Error: invalid string line %s\n", temp);
+                fprintf(stderr, "Error: invalid string line %s\n", line);
                 errorFlag = TRUE;
                 continue;
             }
@@ -120,18 +121,36 @@ int firstPass(char *fileName) {
             temp += strlen(".string");
             for (i = 0; i < tempDc; i++) {
                 num = (int) temp[i];
-                addMemory(&memoryHead, ic + 100, "NO",decimalToBinary((num)));
+                addMemory(&memoryHead, ic + 100, "NO", decimalToBinary((num)));
                 ic++;
             }
             dc += tempDc;
         }
         if (lineFlag == InstructionLine) {
-
+            pressesLine(temp);
         }
+        if (lineFlag ==ExternLine){
+            while(isspace(temp[0]))
+                temp++;
+            temp+= strlen(".extern");
+            sscanf(temp,"%s",nameTemp);
+            addExternLabel(&externHead,nameTemp);
+            continue;
+        }
+        if (lineFlag ==EntryLine) {
+            while (isspace(temp[0]))
+                temp++;
+            temp+= strlen(".entry");
+            sscanf(temp,"%s",nameTemp);
+            addEntryLabel(&entryHead,nameTemp);
+        }
+        continue;
 
 
         free(temp);
     }
+    if (errorFlag == TRUE)
+        return FALSE;
     fclose(file);
     return TRUE;
 }

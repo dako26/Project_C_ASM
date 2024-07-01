@@ -15,6 +15,7 @@
 #include "inputValidation.h"
 #include "table.h"
 #include "memory.h"
+#include "assembly.h"
 int ic,dc;
 
 typedef enum { FALSE, TRUE } boolean;
